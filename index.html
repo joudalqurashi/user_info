@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Management System</h1>
+        
+        <!-- Form Section -->
+        <div class="form-section">
+            <form id="userForm" method="POST" action="dp.php">
+                <div class="form-row">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
+                    
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                    
+                    <button type="submit" name="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+            <h2>User Records</h2>
+            <div id="userTable">
+                <!-- Table content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to load user data
+        function loadUsers() {
+            fetch('dp.php?action=fetch')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('userTable').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Function to toggle status
+        function toggleStatus(userId) {
+            fetch('dp.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=toggle&user_id=' + userId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers(); // Reload the table
+                } else {
+                    alert('Error updating status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating status');
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const age = document.getElementById('age').value;
+
+            // Basic validation
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+
+            if (!age || age < 1 || age > 120) {
+                alert('Please enter a valid age (1-120)');
+                return;
+            }
+
+            // Send data as URL-encoded
+            const formData = new URLSearchParams();
+            formData.append('name', name);
+            formData.append('age', age);
+
+            fetch('dp.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    this.reset(); // Clear the form
+                    loadUsers(); // Reload the table
+                    alert('تم إضافة المستخدم بنجاح!');
+                } else {
+                    alert('خطأ في إضافة المستخدم: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('خطأ في إرسال النموذج. تحقق من اتصال قاعدة البيانات.');
+            });
+        });
+
+        // Load users when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+        });
+    </script>
+</body>
+</html>
